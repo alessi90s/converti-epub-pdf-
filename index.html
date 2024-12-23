@@ -1,59 +1,115 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <title>Test ePub.js + JSZip in un unico file</title>
+  <meta charset="UTF-8">
+  <title>Test ePub.js + JSZip (CDN, nessun errore)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    #render-area {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 10px;
+      min-height: 300px;
+    }
+    #message {
+      margin: 10px 0;
+      color: #333;
+    }
+    .btn {
+      background-color: #2196F3;
+      color: #fff;
+      padding: 8px 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      margin-left: 5px;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
-  <h1>Test ePub.js + JSZip</h1>
-  <p>Se tutto è caricato correttamente, in console vedrai “Nessun errore di JSZip!” e nessuna eccezione “JSZip lib not loaded”.</p>
+  <h1>Carica EPUB con ePub.js (JSZip da CDN)</h1>
 
-  <!-- ===================================================== -->
-  <!-- 1) JSZip v3.10.1 - MINIFIED (codice ufficiale)         -->
-  <!--    Copiato integralmente, senza tagli essenziali       -->
-  <!-- ===================================================== -->
+  <p>Seleziona un file EPUB: <input type="file" id="fileInput" accept=".epub" /></p>
+  <button class="btn" id="loadBtn" disabled>Carica EPUB</button>
+  <div id="message"></div>
+
+  <!-- Area in cui ePub.js renderizza l'EPUB -->
+  <div id="render-area"></div>
+
+  <!-- 1) Carichiamo JSZip dal CDN (PRIMA di ePub.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <!-- 2) Carichiamo ePub.js dal CDN (che troverà JSZip) -->
+  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.88/dist/epub.min.js"></script>
+
+  <!-- 3) Nostro script: utilizza ePub(...) senza errori di JSZip -->
   <script>
-/*! 
-JSZip v3.10.1 - A JavaScript class for generating and reading zip files
-(c) 2009-2021 Stuart Knightley, David Duponchel, Franz Buchinger, Juho Viitasalo, A. Zamoyski
-Dual licenced under the MIT license or GPLv3. See https://raw.githubusercontent.com/Stuk/jszip/main/LICENSE.markdown for more information.
-*/
-!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):t.JSZip=e()}(this,function(){"use strict";var t=function t(){/* ... CODICE MINIFICATO DI JSZip ... */};return t});
-  </script>
+    const fileInput = document.getElementById('fileInput');
+    const loadBtn = document.getElementById('loadBtn');
+    const messageEl = document.getElementById('message');
+    const renderArea = document.getElementById('render-area');
 
-  <!-- ===================================================== -->
-  <!-- 2) ePub.js v0.3.88 - MINIFIED (codice ufficiale)       -->
-  <!--    Anch'esso copiato integralmente.                   -->
-  <!-- ===================================================== -->
-  <script>
-/*!
- ePub.js v0.3.88
- (C) 2012-2021 by FuturePress
- License: https://github.com/futurepress/epub.js/blob/master/LICENSE
-*/
-!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):t.ePub=e()}(this,function(){"use strict";
-/* ... CODICE MINIFICATO DI ePub.js ... */
-});
-  </script>
+    let selectedFile = null;
+    let book = null; // ePub.js Book
 
-  <!-- ===================================================== -->
-  <!-- 3) Script di prova: verifichiamo che ePub(...) funzioni -->
-  <!--    e che non dia più “JSZip lib not loaded”.           -->
-  <!-- ===================================================== -->
-  <script>
-    (function() {
-      try {
-        // Creiamo un file binario vuoto
-        const emptyBuffer = new Uint8Array();
-
-        // Proviamo a istanziare un ePub con ePub.js (che internamente userà JSZip)
-        const book = ePub(emptyBuffer);
-
-        console.log("Tutto ok: ePub e JSZip caricati. Nessun errore di JSZip!");
-      } catch (err) {
-        console.error("Errore ePub.js / JSZip:", err);
+    // Quando selezioniamo un file, abilitiamo il pulsante Carica
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        selectedFile = fileInput.files[0];
+        loadBtn.disabled = false;
       }
-    })();
+    });
+
+    // Clic "Carica EPUB": leggiamo il file e lo passiamo a ePub.js
+    loadBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+      loadBtn.disabled = true;
+      messageEl.textContent = "Caricamento in corso...";
+
+      try {
+        // Leggiamo il file come ArrayBuffer
+        const arrayBuffer = await readFileAsArrayBuffer(selectedFile);
+
+        // Istanziamo l'EPUB con ePub.js (che userà JSZip)
+        book = ePub(arrayBuffer);
+
+        // Renderizziamo nell'elemento #render-area
+        const rendition = book.renderTo(renderArea, {
+          width: '100%',
+          height: '600px'
+        });
+        
+        // Visualizziamo il primo capitolo
+        await rendition.display();
+
+        messageEl.textContent = "EPUB caricato correttamente!";
+      } catch (err) {
+        console.error(err);
+        messageEl.textContent = "Errore caricando l'EPUB: " + err;
+        loadBtn.disabled = false;
+      }
+    });
+
+    // Utility: legge un file come ArrayBuffer
+    function readFileAsArrayBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
   </script>
 </body>
 </html>
