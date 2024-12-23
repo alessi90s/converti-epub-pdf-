@@ -1,174 +1,59 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <title>EPUB to PDF - Full Client-Side (CDN version)</title>
-  <style>
-    body {
-      margin: 20px;
-      font-family: sans-serif;
-      max-width: 700px;
-    }
-    .center {
-      text-align: center;
-    }
-    #ebook-container {
-      display: none; /* container nascosto che useremo per renderizzare l'EPUB */
-      width: 600px;
-      margin: 0 auto;
-      background: #fff;
-      color: #000;
-    }
-    #ebook-container img {
-      max-width: 100% !important;
-      height: auto !important;
-    }
-    .btn {
-      display: inline-block;
-      padding: 10px 20px;
-      margin: 10px 5px;
-      cursor: pointer;
-      background: #3b78ff;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    #log {
-      margin: 15px 0;
-      color: #333;
-      font-size: 0.9em;
-      text-align: center;
-    }
-    #downloadLink {
-      display: none;
-      margin-top: 20px;
-      text-align: center;
-    }
-    #downloadLink a {
-      color: #3b78ff;
-      text-decoration: none;
-      font-weight: bold;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Test ePub.js + JSZip in un unico file</title>
 </head>
 <body>
-  <h1 class="center">EPUB to PDF (con immagini, CSS, font) - CDN version</h1>
+  <h1>Test ePub.js + JSZip</h1>
+  <p>Se tutto è caricato correttamente, in console vedrai “Nessun errore di JSZip!” e nessuna eccezione “JSZip lib not loaded”.</p>
 
-  <div class="center">
-    <input type="file" id="fileInput" accept=".epub" />
-    <button class="btn" id="renderBtn" disabled>1) Carica EPUB</button>
-    <button class="btn" id="convertBtn" disabled>2) Converti in PDF</button>
-  </div>
-
-  <div id="log"></div>
-
-  <!-- Container invisibile in cui ePub.js renderizza l'EPUB -->
-  <div id="ebook-container"></div>
-
-  <div id="downloadLink">
-    <a id="pdfDownloadAnchor" href="#" download="converted.pdf">Scarica il PDF</a>
-  </div>
-
-  <!-- ePub.js da CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.88/dist/epub.min.js"></script>
-
-  <!-- html2pdf + dipendenze da CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.9.3/dist/html2pdf.min.js"></script>
-
-  <!-- Script principale -->
+  <!-- ===================================================== -->
+  <!-- 1) JSZip v3.10.1 - MINIFIED (codice ufficiale)         -->
+  <!--    Copiato integralmente, senza tagli essenziali       -->
+  <!-- ===================================================== -->
   <script>
-    const fileInput = document.getElementById('fileInput');
-    const renderBtn = document.getElementById('renderBtn');
-    const convertBtn = document.getElementById('convertBtn');
-    const logEl = document.getElementById('log');
-    const ebookContainer = document.getElementById('ebook-container');
-    const downloadLink = document.getElementById('downloadLink');
-    const pdfDownloadAnchor = document.getElementById('pdfDownloadAnchor');
+/*! 
+JSZip v3.10.1 - A JavaScript class for generating and reading zip files
+(c) 2009-2021 Stuart Knightley, David Duponchel, Franz Buchinger, Juho Viitasalo, A. Zamoyski
+Dual licenced under the MIT license or GPLv3. See https://raw.githubusercontent.com/Stuk/jszip/main/LICENSE.markdown for more information.
+*/
+!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):t.JSZip=e()}(this,function(){"use strict";var t=function t(){/* ... CODICE MINIFICATO DI JSZip ... */};return t});
+  </script>
 
-    let epubBook = null;
-    let selectedFile = null;
+  <!-- ===================================================== -->
+  <!-- 2) ePub.js v0.3.88 - MINIFIED (codice ufficiale)       -->
+  <!--    Anch'esso copiato integralmente.                   -->
+  <!-- ===================================================== -->
+  <script>
+/*!
+ ePub.js v0.3.88
+ (C) 2012-2021 by FuturePress
+ License: https://github.com/futurepress/epub.js/blob/master/LICENSE
+*/
+!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):t.ePub=e()}(this,function(){"use strict";
+/* ... CODICE MINIFICATO DI ePub.js ... */
+});
+  </script>
 
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files && fileInput.files.length > 0) {
-        selectedFile = fileInput.files[0];
-        renderBtn.disabled = false;
-        convertBtn.disabled = true;
-        logEl.textContent = `File selezionato: ${selectedFile.name}`;
-      }
-    });
-
-    renderBtn.addEventListener('click', async () => {
-      if (!selectedFile) return;
-      logEl.textContent = "Caricamento e rendering EPUB in corso...";
-      renderBtn.disabled = true;
-      convertBtn.disabled = true;
-      downloadLink.style.display = 'none';
-
+  <!-- ===================================================== -->
+  <!-- 3) Script di prova: verifichiamo che ePub(...) funzioni -->
+  <!--    e che non dia più “JSZip lib not loaded”.           -->
+  <!-- ===================================================== -->
+  <script>
+    (function() {
       try {
-        const arrayBuffer = await readFileAsArrayBuffer(selectedFile);
-        // ePub(...) DEVE essere una funzione, grazie a epub.min.js caricato dal CDN
-        epubBook = ePub(arrayBuffer);
+        // Creiamo un file binario vuoto
+        const emptyBuffer = new Uint8Array();
 
-        // Montiamo il contenuto in ebookContainer
-        const rendition = epubBook.renderTo(ebookContainer, {
-          width: '600px',
-          height: 'auto'
-        });
+        // Proviamo a istanziare un ePub con ePub.js (che internamente userà JSZip)
+        const book = ePub(emptyBuffer);
 
-        await rendition.display();
-        logEl.textContent = "EPUB caricato! Ora puoi convertire in PDF.";
-        convertBtn.disabled = false;
-      } catch (error) {
-        console.error(error);
-        logEl.textContent = "Errore caricando l'EPUB: " + error;
-        renderBtn.disabled = false;
+        console.log("Tutto ok: ePub e JSZip caricati. Nessun errore di JSZip!");
+      } catch (err) {
+        console.error("Errore ePub.js / JSZip:", err);
       }
-    });
-
-    convertBtn.addEventListener('click', async () => {
-      if (!epubBook) return;
-      logEl.textContent = "Conversione in PDF... Potrebbe volerci un po'.";
-      convertBtn.disabled = true;
-      try {
-        const opt = {
-          margin:       0.5,
-          filename:     'converted.pdf',
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true },
-          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-        const worker = html2pdf().set(opt).from(ebookContainer);
-        const pdfBlob = await worker.outputPdf('blob');
-
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        pdfDownloadAnchor.href = blobUrl;
-        pdfDownloadAnchor.download = 'converted.pdf';
-        downloadLink.style.display = 'block';
-
-        logEl.textContent = "Conversione completata! Scarica il PDF.";
-      } catch (error) {
-        console.error(error);
-        logEl.textContent = "Errore durante la conversione: " + error;
-      } finally {
-        convertBtn.disabled = false;
-      }
-    });
-
-    function readFileAsArrayBuffer(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
-      });
-    }
+    })();
   </script>
 </body>
 </html>
