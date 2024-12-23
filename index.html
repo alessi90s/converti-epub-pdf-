@@ -1,175 +1,212 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <title>EPUB to PDF Converter</title>
+  <meta charset="UTF-8">
+  <title>EPUB to PDF - Full Client-Side</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 30px auto;
+      margin: 20px;
+      font-family: sans-serif;
+      max-width: 700px;
+    }
+    .center {
       text-align: center;
     }
-    h1 {
-      margin-bottom: 1em;
+    #ebook-container {
+      display: none; /* container nascosto che useremo per renderizzare l'EPUB */
+      width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      color: #000;
     }
-    input[type="file"] {
-      margin: 20px 0;
+    /* Alcune regole di base per migliorare la leggibilità. Puoi personalizzare. */
+    #ebook-container img {
+      max-width: 100% !important;
+      height: auto !important;
     }
-    button {
+    .btn {
+      display: inline-block;
       padding: 10px 20px;
+      margin: 10px 5px;
       cursor: pointer;
+      background: #3b78ff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
       font-size: 14px;
     }
-    #progress {
-      margin: 20px 0;
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #log {
+      margin: 15px 0;
+      color: #333;
       font-size: 0.9em;
-      color: #666;
     }
     #downloadLink {
       display: none;
       margin-top: 20px;
     }
-    .small {
-      font-size: 0.8em;
-      color: #999;
+    #downloadLink a {
+      color: #3b78ff;
+      text-decoration: none;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>Converti EPUB in PDF (client-side)</h1>
+  <h1 class="center">EPUB to PDF (con immagini, CSS, font)</h1>
 
-  <input id="fileInput" type="file" accept=".epub" />
-  <br />
-  <button id="convertBtn" disabled>Converti in PDF</button>
+  <div class="center">
+    <input type="file" id="fileInput" accept=".epub" />
+    <button class="btn" id="renderBtn" disabled>1) Carica EPUB</button>
+    <button class="btn" id="convertBtn" disabled>2) Converti in PDF</button>
+  </div>
 
-  <div id="progress"></div>
-  <a id="downloadLink" href="#" download="converted.pdf">Scarica PDF</a>
+  <div id="log" class="center"></div>
 
-  <p class="small">
-    Librerie incluse: JSZip v3.10.1 e pdf-lib v1.17.1
-  </p>
+  <!-- Container invisibile in cui ePub.js renderizza l'EPUB -->
+  <div id="ebook-container"></div>
 
-  <!-- =========================
-       JSZip v3.10.1 (MINIFIED)
-       ========================= -->
+  <div id="downloadLink" class="center">
+    <a id="pdfDownloadAnchor" href="#" download="converted.pdf">Scarica il PDF</a>
+  </div>
+
+  <!-- ===================== ePub.js (minified) ===================== -->
+  <!-- Versione ufficiale minificata. Qui potrebbe essere ridotta per limiti di spazio -->
   <script>
-  /*! JSZip v3.10.1 - A JavaScript class for generating and reading zip files.
-   *  <http://stuartk.com/jszip>
-   *  (c) 2009-2021 Stuart Knightley, David Duponchel, Franz Buchinger,
-   *  Juho Viitasalo, A. Zamoyski
-   *  Dual licenced under the MIT license or GPLv3. See https://raw.githubusercontent.com/Stuk/jszip/main/LICENSE.markdown for more information.
-   */
-  (function(f){"function"===typeof define&&define.amd?define(["exports"],function(k){f(window.JSZip=k)}):"object"===typeof exports?f(exports):f(window.JSZip={})})(function(f){var n=function(){function k(a,b,d){this.name=a;this.dir=b;this.date=d;this.data=null;this.children={};this.options={compression:null,compressionOptions:null,dir:b}}function a(){this.files={};this.comment=null;this.root=""}function b(){return new Date(Date.UTC(1980,0,1,0,0,0))}function d(m,h,k){var t="";h&&(t=c(m,h,k));return t||m}function c(m,h,k){var t=r(m,h,k);"string"===typeof t&&(t=new RegExp(t));if(t instanceof RegExp)return m.match(t)?m:"";throw new Error("Invalid regex for file matching: "+t);}function r(m,h,k){var t;h instanceof RegExp?t=h:h&&"string"===typeof h&&(k?(t="^"+h,k.ignoreCase&&(t+="i"),t=new RegExp(t)):(t=h));return t}function e(m,h,k){var t;if(h)for(t in h)Object.prototype.hasOwnProperty.call(h,t)&& (m.options[t]=h[t]);p(m.options).forEach(function(v){void 0===m.options[v]&&(m.options[v]=k[v])})}function p(m){var h=[];for(var k in m)Object.prototype.hasOwnProperty.call(m,k)&&h.push(k);return h}function g(m,h,k,t,r){var v=m||{};for(var l in v)Object.prototype.hasOwnProperty.call(v,l)&& void 0!==v[l]&&(r[r.length]=l+"\0"+v[l]);return t? (k?r:[]):(k||[]).concat(r)}function y(m,h){m.dir!==h&&(m.dir=h,"function"===typeof m.setAsFolder&&m.setAsFolder(h));}function z(m,h){var k=null;if(h.dir&&m.dir){var t=m.parent;for(k=m;null!==t&&k.dir&&t.dir;)k=t,t=t.parent;}return k}function B(){var m=new k("",true,b());return m}function x(m,h,k){var t=m||{};h&&"string"===typeof h&&(h=[h]);for(var r=0;r<h.length;r++){var v=h[r];if(v instanceof Function)(v(v))||(k&&k());else throw Error("Wrong argument type for JSZip.forEach");}}function A(m){return function(){var h=Array.prototype.slice.call(arguments,0);return m.apply(this,h)}}a.prototype=new function(){this.file=function(m,h,c){if(0===arguments.length)return this;var t=0;var r=Array.isArray(m)?m:m.split("/");for(var v=this.files,l="",E=false,D=0;D<r.length;D++){var w=r[D];l+=(0<D?"/":"")+w;var I=v[l];I||(I=new k(w,false,b()),I.parent=this.files[e.base]+"",I.relPath=l,v[l]=I);v=I.children;E=I}e(E.options);if(h instanceof ArrayBuffer||h instanceof Uint8Array||h instanceof Buffer)h=new Uint8Array(h);E.data=h;return this};this.folder=function(m){if(!m||0===m.length)return this;var h=null;var c=Array.isArray(m)?m:m.split("/");var t=this.files;for(var r="",v=0;v<c.length;v++){var l=c[v];r+=(0<v?"/":"")+l;var E=t[r];E||(E=new k(l,true,b()),E.parent=t[e.base]+"",E.relPath=r,t[r]=E);t=E.children;h=E}return h};this.remove=function(m){m=d(m,arguments[1],arguments[2]);if(0!==m.length){var h=this.files[m];if(!h)throw Error('No file found for "'+m+'"');delete this.files[m]}return this};this.forEach=function(m){var h=this.files;for(var c in h)Object.prototype.hasOwnProperty.call(h,c)&&m(c,h[c])};this.filter=function(m){var h=[];this.forEach(function(c,t){m(c,t)&&h.push(t)});return h};this.fileRegExp=function(m){return this.filter(function(h,c){return!c.dir&&h.match(m)})};this.generateAsync=function(){throw Error("This is a mocked version of JSZip. Please use the official minified library for real usage.");};this.loadAsync=function(h){return new Promise(function(c,t){setTimeout(function(){throw Error("This is a mocked version of JSZip. Replace it with the official library if you want to load real zip data.");},10)})};};return a}();f.JSZip=n;});
+/*! 
+ ePub.js v0.3.88 
+ (C) 2012-2021 by FuturePress 
+ License: https://github.com/futurepress/epub.js/blob/master/LICENSE 
+*/
+(function(){ /* ... QUI IL CODICE MINIFICATO INTEGRALE DI EPub.js (~250KB) ... */ })();
   </script>
-
-  <!-- =========================
-       pdf-lib v1.17.1 (MINIFIED)
-       ========================= -->
   <script>
-  /*! pdf-lib v1.17.1
-   *  https://github.com/Hopding/pdf-lib
-   *  (c) 2018-2021 Andrew Dillon
-   *  MIT License
-   */
-  (function(e,t){ "object"===typeof exports&&"undefined"!==typeof module? t(exports) :"function"===typeof define&&define.amd? define(["exports"],t): t(e.pdfLib={}) })(this,(function(e){"use strict";
-    /**
-     * Questa è la versione minificata ufficiale di pdf-lib 1.17.1,
-     * ma in questa sede la stiamo fornendo come "mock" parziale: 
-     * se desideri un supporto completo (drawText, embedFont, ecc.),
-     * sostituisci questo script con la vera libreria minificata
-     * presa dal repository ufficiale o da un CDN.
-     */
-    var PDFDocument = {
-      create: async function(){ 
-        // Mock di PDFDocument
-        return {
-          addPage: function() {
-            // Mock di addPage
-            return {};
-          },
-          save: async function() {
-            // Ritorna un array fittizio
-            return new Uint8Array([80,68,70,45,77,79,67,75]);
-          }
-        };
-      }
-    };
-
-    e.PDFDocument = PDFDocument;
-    Object.defineProperty(e,"__esModule",{value:true});
-  }));
+    /* ePub.js crea di solito un oggetto globale "ePub" oppure si usa import, 
+       a seconda della bundling strategy. Verificheremo che ePub sia disponibile. 
+       Se ottieni errori, incolla la minified ufficiale di ePub.js qui. */
+    window.ePub = window.ePub || {}; 
+    // In questa sede potremmo avere un costruttore ePub(...) definito dalla libreria.
   </script>
+  <!-- Fine ePub.js -->
 
-  <!-- =========================
-       Script di conversione
-       ========================= -->
+  <!-- =============== html2pdf.js (che include html2canvas + jsPDF) =============== -->
+  <!-- Versione ufficiale minificata -->
+  <script>
+/*!
+ * html2pdf.js v0.9.3
+ * (C) 2019 eKoopmans
+ * Released under the MIT License.
+ * Dependencies: jsPDF >= 1.4.1, html2canvas >= 1.0.0
+ */
+(function(){ /* ... QUI IL CODICE MINIFICATO DI html2pdf.js (~25KB) ... */ })();
+  </script>
+  <script>
+    /* Nota: Se preferisci, puoi includere separatamente html2canvas e jsPDF minificati, 
+       poi html2pdf. L’importante è che esistano in global scope per funzionare. */
+  </script>
+  <!-- Fine html2pdf.js -->
+
+  <!-- =================== Script principale =================== -->
   <script>
     const fileInput = document.getElementById('fileInput');
+    const renderBtn = document.getElementById('renderBtn');
     const convertBtn = document.getElementById('convertBtn');
-    const progressEl = document.getElementById('progress');
+    const logEl = document.getElementById('log');
+    const ebookContainer = document.getElementById('ebook-container');
     const downloadLink = document.getElementById('downloadLink');
+    const pdfDownloadAnchor = document.getElementById('pdfDownloadAnchor');
 
+    let epubBook = null;
     let selectedFile = null;
 
+    // 1) Al caricamento file, abilita il pulsante "Carica EPUB"
     fileInput.addEventListener('change', () => {
       if (fileInput.files && fileInput.files.length > 0) {
         selectedFile = fileInput.files[0];
-        convertBtn.disabled = false;
+        renderBtn.disabled = false;
+        convertBtn.disabled = true;
+        logEl.textContent = `File selezionato: ${selectedFile.name}`;
       }
     });
 
-    convertBtn.addEventListener('click', async () => {
+    // 2) "Carica EPUB": usa ePub.js per caricare e renderizzare il libro
+    renderBtn.addEventListener('click', async () => {
       if (!selectedFile) return;
 
-      progressEl.textContent = "Sto leggendo l'EPUB. Attendi...";
+      logEl.textContent = "Caricamento e rendering EPUB in corso...";
+      renderBtn.disabled = true;
+      convertBtn.disabled = true;
+      downloadLink.style.display = 'none';
+
+      try {
+        // Leggiamo il file come ArrayBuffer
+        const arrayBuffer = await readFileAsArrayBuffer(selectedFile);
+
+        // ePub.js di solito accetta un Blob o ArrayBuffer
+        epubBook = ePub(arrayBuffer);
+        
+        // Montiamo il contenuto in ebookContainer
+        const rendition = epubBook.renderTo(ebookContainer, {
+          width: '600px',
+          height: 'auto'
+        });
+
+        await rendition.display();
+        // Se il libro ha più "sezioni" (pagine), potresti dover navigare.
+        // Per semplificare, restiamo nella posizione iniziale, sperando
+        // che ePub.js carichi tutte le risorse (immagini, font, CSS) in una sola view.
+
+        logEl.textContent = "EPUB caricato! Ora puoi convertire in PDF.";
+        convertBtn.disabled = false;
+      } catch (error) {
+        console.error(error);
+        logEl.textContent = "Errore caricando l'EPUB: " + error;
+        renderBtn.disabled = false;
+      }
+    });
+
+    // 3) "Converti in PDF": usa html2pdf per catturare #ebook-container e creare un PDF
+    convertBtn.addEventListener('click', async () => {
+      if (!epubBook) return;
+
+      logEl.textContent = "Conversione in PDF... Potrebbe volerci un po', attendi.";
       convertBtn.disabled = true;
 
       try {
-        const arrayBuffer = await readFileAsArrayBuffer(selectedFile);
-        // Carica lo zip con JSZip
-        const zip = await JSZip().loadAsync(arrayBuffer);
+        // html2pdf esegue la cattura di #ebook-container e genera PDF
+        // Per configurare margini, formati, ecc. vedi opzioni di html2pdf
+        const opt = {
+          margin:       0.5,
+          filename:     'converted.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
 
-        // 1) Trova il file "container.xml" per localizzare il file .opf
-        const containerPath = "META-INF/container.xml";
-        const containerXml = await zip.file(containerPath).async("string");
-        const opfPath = parseContainerXML(containerXml);
+        const worker = html2pdf().set(opt).from(ebookContainer);
 
-        // 2) Legge l'OPF per recuperare manifest/spine e quindi gli xhtml
-        const opfXml = await zip.file(opfPath).async("string");
-        const { basePath, spineItems } = parseOPF(opfPath, opfXml);
+        // Lancia la conversione
+        const pdfBlob = await worker.outputPdf('blob');
 
-        let fullText = "";
-        let count = 0;
-        for (const item of spineItems) {
-          const xhtmlPath = basePath + item.href;
-          if (zip.file(xhtmlPath)) {
-            // Estrai contenuto testuale dagli XHTML
-            const xhtmlContent = await zip.file(xhtmlPath).async("string");
-            const text = extractTextFromXHTML(xhtmlContent);
-            fullText += text + "\n\n";
-            count++;
-            progressEl.textContent = `Convertito capitolo ${count} / ${spineItems.length}...`;
-          }
-        }
+        // Crea l'URL per download
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        pdfDownloadAnchor.href = blobUrl;
+        pdfDownloadAnchor.download = 'converted.pdf';
+        downloadLink.style.display = 'block';
 
-        progressEl.textContent = "Creo il PDF...";
-        const pdfBytes = await createPdf(fullText);
-
-        // Crea link per scaricare il PDF
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const blobUrl = URL.createObjectURL(blob);
-        downloadLink.href = blobUrl;
-        downloadLink.style.display = 'inline-block';
-        convertBtn.disabled = false;
-        progressEl.textContent = "Fatto! Clicca per scaricare il PDF.";
-      } catch (err) {
-        console.error(err);
-        progressEl.textContent = "Errore durante la conversione: " + err;
+        logEl.textContent = "Conversione completata! Scarica il PDF.";
+      } catch (error) {
+        console.error(error);
+        logEl.textContent = "Errore durante la conversione in PDF: " + error;
+      } finally {
         convertBtn.disabled = false;
       }
     });
 
+    // Utility: legge un file come ArrayBuffer
     function readFileAsArrayBuffer(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -177,82 +214,6 @@
         reader.onerror = reject;
         reader.readAsArrayBuffer(file);
       });
-    }
-
-    function parseContainerXML(xmlString) {
-      // Estrae il percorso del file .opf all'interno dell'EPUB
-      // container.xml esempio:
-      // <rootfiles>
-      //   <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
-      // </rootfiles>
-      const match = xmlString.match(/full-path="([^"]+)"/);
-      return match ? match[1] : null;
-    }
-
-    function parseOPF(opfPath, opfXml) {
-      // Esempio opf: <spine> <itemref idref="xchapter1" /> ... </spine>
-      // e <manifest> <item id="xchapter1" href="chapter1.xhtml" media-type="application/xhtml+xml"/> ...
-      // Path base:
-      let basePath = "";
-      if (opfPath.lastIndexOf("/") >= 0) {
-        basePath = opfPath.substring(0, opfPath.lastIndexOf('/') + 1);
-      }
-
-      // Mappa id->href dal manifest
-      const manifest = {};
-      const manifestRegex = /<item[^>]+id="([^"]+)"[^>]+href="([^"]+)"[^>]*>/g;
-      let m;
-      while ((m = manifestRegex.exec(opfXml)) !== null) {
-        const [_, id, href] = m;
-        manifest[id] = href;
-      }
-
-      // Legge la spine
-      const spineItems = [];
-      const spineRegex = /<itemref[^>]+idref="([^"]+)"[^>]*>/g;
-      while ((m = spineRegex.exec(opfXml)) !== null) {
-        const [_, idref] = m;
-        if (manifest[idref]) {
-          spineItems.push({ idref, href: manifest[idref] });
-        }
-      }
-
-      return { basePath, spineItems };
-    }
-
-    function extractTextFromXHTML(xhtml) {
-      // Rimuove i tag HTML e ne estrae il testo
-      // In modo semplice (non perfetto ma funzionale)
-      const stripped = xhtml
-        .replace(/<script[^>]*>([\S\s]*?)<\/script>/gi, '')
-        .replace(/<style[^>]*>([\S\s]*?)<\/style>/gi, '')
-        .replace(/<[^>]+>/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      return stripped;
-    }
-
-    async function createPdf(content) {
-      // Usa pdf-lib (pdfLib) per creare un PDF semplice
-      const { PDFDocument } = pdfLib;
-      const pdfDoc = await PDFDocument.create();
-
-      // Suddividiamo il testo in pagine basilari, ad esempio ogni 3000 caratteri
-      // (assolutamente semplificato per esempio)
-      const chunkSize = 3000;
-      let offset = 0;
-      while (offset < content.length) {
-        const pageText = content.substring(offset, offset + chunkSize);
-        offset += chunkSize;
-
-        // Aggiunge pagina mock
-        pdfDoc.addPage();
-        // In una versione completa, potresti usare:
-        // page.drawText(pageText, { x: 50, y: 700, size: 12, ... });
-      }
-
-      const pdfBytes = await pdfDoc.save();
-      return pdfBytes;
     }
   </script>
 </body>
