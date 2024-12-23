@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>EPUB to PDF - Full Client-Side</title>
+  <title>EPUB to PDF - Full Client-Side (CDN version)</title>
   <style>
     body {
       margin: 20px;
@@ -19,7 +19,6 @@
       background: #fff;
       color: #000;
     }
-    /* Alcune regole di base per migliorare la leggibilità. Puoi personalizzare. */
     #ebook-container img {
       max-width: 100% !important;
       height: auto !important;
@@ -43,10 +42,12 @@
       margin: 15px 0;
       color: #333;
       font-size: 0.9em;
+      text-align: center;
     }
     #downloadLink {
       display: none;
       margin-top: 20px;
+      text-align: center;
     }
     #downloadLink a {
       color: #3b78ff;
@@ -56,7 +57,7 @@
   </style>
 </head>
 <body>
-  <h1 class="center">EPUB to PDF (con immagini, CSS, font)</h1>
+  <h1 class="center">EPUB to PDF (con immagini, CSS, font) - CDN version</h1>
 
   <div class="center">
     <input type="file" id="fileInput" accept=".epub" />
@@ -64,52 +65,24 @@
     <button class="btn" id="convertBtn" disabled>2) Converti in PDF</button>
   </div>
 
-  <div id="log" class="center"></div>
+  <div id="log"></div>
 
   <!-- Container invisibile in cui ePub.js renderizza l'EPUB -->
   <div id="ebook-container"></div>
 
-  <div id="downloadLink" class="center">
+  <div id="downloadLink">
     <a id="pdfDownloadAnchor" href="#" download="converted.pdf">Scarica il PDF</a>
   </div>
 
-  <!-- ===================== ePub.js (minified) ===================== -->
-  <!-- Versione ufficiale minificata. Qui potrebbe essere ridotta per limiti di spazio -->
-  <script>
-/*! 
- ePub.js v0.3.88 
- (C) 2012-2021 by FuturePress 
- License: https://github.com/futurepress/epub.js/blob/master/LICENSE 
-*/
-(function(){ /* ... QUI IL CODICE MINIFICATO INTEGRALE DI EPub.js (~250KB) ... */ })();
-  </script>
-  <script>
-    /* ePub.js crea di solito un oggetto globale "ePub" oppure si usa import, 
-       a seconda della bundling strategy. Verificheremo che ePub sia disponibile. 
-       Se ottieni errori, incolla la minified ufficiale di ePub.js qui. */
-    window.ePub = window.ePub || {}; 
-    // In questa sede potremmo avere un costruttore ePub(...) definito dalla libreria.
-  </script>
-  <!-- Fine ePub.js -->
+  <!-- ePub.js da CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.88/dist/epub.min.js"></script>
 
-  <!-- =============== html2pdf.js (che include html2canvas + jsPDF) =============== -->
-  <!-- Versione ufficiale minificata -->
-  <script>
-/*!
- * html2pdf.js v0.9.3
- * (C) 2019 eKoopmans
- * Released under the MIT License.
- * Dependencies: jsPDF >= 1.4.1, html2canvas >= 1.0.0
- */
-(function(){ /* ... QUI IL CODICE MINIFICATO DI html2pdf.js (~25KB) ... */ })();
-  </script>
-  <script>
-    /* Nota: Se preferisci, puoi includere separatamente html2canvas e jsPDF minificati, 
-       poi html2pdf. L’importante è che esistano in global scope per funzionare. */
-  </script>
-  <!-- Fine html2pdf.js -->
+  <!-- html2pdf + dipendenze da CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.9.3/dist/html2pdf.min.js"></script>
 
-  <!-- =================== Script principale =================== -->
+  <!-- Script principale -->
   <script>
     const fileInput = document.getElementById('fileInput');
     const renderBtn = document.getElementById('renderBtn');
@@ -122,7 +95,6 @@
     let epubBook = null;
     let selectedFile = null;
 
-    // 1) Al caricamento file, abilita il pulsante "Carica EPUB"
     fileInput.addEventListener('change', () => {
       if (fileInput.files && fileInput.files.length > 0) {
         selectedFile = fileInput.files[0];
@@ -132,22 +104,18 @@
       }
     });
 
-    // 2) "Carica EPUB": usa ePub.js per caricare e renderizzare il libro
     renderBtn.addEventListener('click', async () => {
       if (!selectedFile) return;
-
       logEl.textContent = "Caricamento e rendering EPUB in corso...";
       renderBtn.disabled = true;
       convertBtn.disabled = true;
       downloadLink.style.display = 'none';
 
       try {
-        // Leggiamo il file come ArrayBuffer
         const arrayBuffer = await readFileAsArrayBuffer(selectedFile);
-
-        // ePub.js di solito accetta un Blob o ArrayBuffer
+        // ePub(...) DEVE essere una funzione, grazie a epub.min.js caricato dal CDN
         epubBook = ePub(arrayBuffer);
-        
+
         // Montiamo il contenuto in ebookContainer
         const rendition = epubBook.renderTo(ebookContainer, {
           width: '600px',
@@ -155,10 +123,6 @@
         });
 
         await rendition.display();
-        // Se il libro ha più "sezioni" (pagine), potresti dover navigare.
-        // Per semplificare, restiamo nella posizione iniziale, sperando
-        // che ePub.js carichi tutte le risorse (immagini, font, CSS) in una sola view.
-
         logEl.textContent = "EPUB caricato! Ora puoi convertire in PDF.";
         convertBtn.disabled = false;
       } catch (error) {
@@ -168,16 +132,11 @@
       }
     });
 
-    // 3) "Converti in PDF": usa html2pdf per catturare #ebook-container e creare un PDF
     convertBtn.addEventListener('click', async () => {
       if (!epubBook) return;
-
-      logEl.textContent = "Conversione in PDF... Potrebbe volerci un po', attendi.";
+      logEl.textContent = "Conversione in PDF... Potrebbe volerci un po'.";
       convertBtn.disabled = true;
-
       try {
-        // html2pdf esegue la cattura di #ebook-container e genera PDF
-        // Per configurare margini, formati, ecc. vedi opzioni di html2pdf
         const opt = {
           margin:       0.5,
           filename:     'converted.pdf',
@@ -185,13 +144,9 @@
           html2canvas:  { scale: 2, useCORS: true },
           jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
-
         const worker = html2pdf().set(opt).from(ebookContainer);
-
-        // Lancia la conversione
         const pdfBlob = await worker.outputPdf('blob');
 
-        // Crea l'URL per download
         const blobUrl = URL.createObjectURL(pdfBlob);
         pdfDownloadAnchor.href = blobUrl;
         pdfDownloadAnchor.download = 'converted.pdf';
@@ -200,13 +155,12 @@
         logEl.textContent = "Conversione completata! Scarica il PDF.";
       } catch (error) {
         console.error(error);
-        logEl.textContent = "Errore durante la conversione in PDF: " + error;
+        logEl.textContent = "Errore durante la conversione: " + error;
       } finally {
         convertBtn.disabled = false;
       }
     });
 
-    // Utility: legge un file come ArrayBuffer
     function readFileAsArrayBuffer(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
